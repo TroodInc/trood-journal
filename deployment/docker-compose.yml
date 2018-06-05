@@ -5,9 +5,7 @@ services:
     build:
       context: ../
       dockerfile: deployment/Dockerfile
-    container_name: ${COMPOSE_PROJECT_NAME}.journal
-    volumes:
-      - ../:/home/src
+    container_name: journal
     environment:
       DJANGO_CONFIGURATION: Production
     networks:
@@ -15,9 +13,7 @@ services:
 
   journal_postgres:
       image: postgres:9.5
-      container_name: ${COMPOSE_PROJECT_NAME}.journal.postgres
-      environment:
-        CONTAINER_NAME: ${COMPOSE_PROJECT_NAME}.journal.postgres
+      container_name: postgres.journal
       volumes:
         - ./postgres/${CONTAINER_NAME}/data:/var/lib/postgresql/data
         - ./postgres/${CONTAINER_NAME}/conf:/etc/postgresql

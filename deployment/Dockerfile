@@ -7,7 +7,9 @@ RUN mkdir -p $APPDIR
 
 WORKDIR $APPDIR
 
-ADD ./ $APPDIR/
+COPY ./journal $APPDIR/journal
+COPY ./manage.py $APPDIR/
+COPY ./requirements.txt $APPDIR/
 RUN pip install -r $APPDIR/requirements.txt
 
 EXPOSE 8000
