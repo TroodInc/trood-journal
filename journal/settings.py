@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'django_filters',
     'journal.api',
 ]
 
@@ -107,5 +108,3 @@ USE_TZ = True
 REST_FRAMEWORK = {
     'PAGINATE_BY': 10,
 }
-
-
