@@ -3,3 +3,4 @@ deployment/postgres
 journal/local_settings.py
 __pycache__
 .idea/*
+.pytest_cache/*
