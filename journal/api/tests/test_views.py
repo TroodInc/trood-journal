@@ -128,6 +128,61 @@ class JournalViewSetTestCase(APITestCase):
         assert response.status_code == HTTP_200_OK
         assert len(response.data) == 1
 
+    def test_filter_by_pk(self):
+        journal = JournalFactory.create(alias='leads',
+                                        name='Leads journal',
+                                        history_record_key='target_id')
+
+        # Create history records for first lead
+        hr1 = HistoryRecordFactory.create(journal=journal,
+                                          action='create',
+                                          actor={'name': 'John Doe', 'id': 2},
+                                          content={'name': 'Client Inc.',
+                                                   'status': 'new',
+                                                   'target_id': 1,
+                                                   'files': [1, 14]})
+
+        hr2 = HistoryRecordFactory.create(journal=journal,
+                                          action='update',
+                                          actor={'name': 'John Doe', 'id': 2},
+                                          content={'name': 'Client Inc.',
+                                                   'status': 'update',
+                                                   'target_id': 1,
+                                                   'files': [1],
+                                                   'comments': [
+                                                       'Hello worlds']})
+        hr3 = HistoryRecordFactory.create(journal=journal,
+                                          action='update',
+                                          actor={'name': 'John Doe', 'id': 2},
+                                          content={'name': 'Client Inc.',
+                                                   'status': 'update',
+                                                   'target_id': 1,
+                                                   'files': [1],
+                                                   'comments': ['Hello worlds',
+                                                                'Bye worlds']})
+
+        # Create history records for second lead
+        hr4 = HistoryRecordFactory.create(journal=journal,
+                                          action='create',
+                                          actor={'name': 'Alice Cup', 'id': 3},
+                                          content={'name': 'Megaclient',
+                                                   'status': 'new',
+                                                   'target_id': 2})
+
+        hr5 = HistoryRecordFactory.create(journal=journal,
+                                          action='update',
+                                          actor={'name': 'Alice Cup', 'id': 3},
+                                          content={'name': 'Megaclient',
+                                                   'status': 'update',
+                                                   'target_id': 2,
+                                                   'files': [2, 3]})
+        response = self.client.get(
+            f'/api/v1.0/history/?journal={journal.id}&pk={1}',
+            format='json')
+
+        assert response.status_code == HTTP_200_OK
+        assert len(response.data) == 3
+
 
 class HistoryRecordViewSetTestCase(APITestCase):
     def setUp(self):
@@ -135,22 +190,7 @@ class HistoryRecordViewSetTestCase(APITestCase):
 
     def test_create_history_record_ok(self):
         journal = JournalFactory.create(alias='clients',
-                                          name='Clients journal')
-
-        input_data = {
-            "journal": journal.id,
-            "_action": "create",
-            "_actor": {"name": "John Doe", "id": 2},
-            "name": "Client Inc.",
-            "status": "new",
-            "files": [1, 14],
-        }
-        response = self.client.post(f'/api/v1.0/history/',
-                                    data=input_data, format='json')
-        assert response.status_code == 201
-
-    def test_create_history_record_diff_ok(self):
-        journal = JournalFactory.create(alias='clients',
+                                        history_record_key='target_id',
                                         name='Clients journal')
 
         input_data = {
@@ -159,6 +199,25 @@ class HistoryRecordViewSetTestCase(APITestCase):
             "_actor": {"name": "John Doe", "id": 2},
             "name": "Client Inc.",
             "status": "new",
+            "target_id": 1,
+            "files": [1, 14],
+        }
+        response = self.client.post(f'/api/v1.0/history/',
+                                    data=input_data, format='json')
+        assert response.status_code == 201
+
+    def test_create_history_record_diff_ok(self):
+        journal = JournalFactory.create(alias='clients',
+                                        history_record_key='target_id',
+                                        name='Clients journal')
+
+        input_data = {
+            "journal": journal.id,
+            "_action": "create",
+            "_actor": {"name": "John Doe", "id": 2},
+            "name": "Client Inc.",
+            "status": "new",
+            "target_id": 1,
             "files": [1, 14],
         }
         response = self.client.post(f'/api/v1.0/history/',
@@ -171,6 +230,7 @@ class HistoryRecordViewSetTestCase(APITestCase):
             "_actor": {"name": "John Doe", "id": 2},
             "name": "Client Inc.",
             "status": "update",
+            "target_id": 1,
             "files": [1],
         }
         response = self.client.post(f'/api/v1.0/history/',

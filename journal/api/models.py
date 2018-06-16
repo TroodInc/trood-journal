@@ -11,6 +11,26 @@ class Journal(models.Model):
     save_diff = models.BooleanField(default=True)
 
 
+class HistoryRecordManager(models.Manager):
+    def last_for_target(self, journal=None, target_id=None):
+        if not (journal and target_id):
+            return None
+
+        prev_history_record = None
+
+        records_content_not_null = journal.history_records.filter(
+            content__isnull=False,
+        )
+        # Find previous history record
+        if records_content_not_null.count() > 0:
+            history_for_target = journal.history_records.filter(
+                content__target_id=target_id
+            )
+            if history_for_target.count() > 0:
+                prev_history_record = history_for_target.first()
+        return prev_history_record
+
+
 class HistoryRecord(models.Model):
     journal = models.ForeignKey(Journal, related_name='history_records')
     actor = JSONField()
@@ -19,6 +39,7 @@ class HistoryRecord(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     content = JSONField()
     diff = JSONField(null=True)
+    objects = HistoryRecordManager()
 
     class Meta:
         ordering = ['-created_at']
