@@ -52,12 +52,16 @@ class HistoryRecordSerializer(serializers.ModelSerializer):
         actor = validated_data.get('_actor')
 
         content = validated_data.get('content')
+
         journal_id = content.get('journal')
         journal = Journal.objects.get(id=journal_id)
 
-        prev_history_record = None
-        if journal.history_records.count() > 0:
-            prev_history_record = journal.history_records.first()
+        target_id = content.get(journal.history_record_key)
+
+        prev_history_record = HistoryRecord.objects.last_for_target(
+            journal=journal,
+            target_id=target_id
+        )
 
         new_history_record = HistoryRecord.objects.create(
             journal=journal,
@@ -65,6 +69,8 @@ class HistoryRecordSerializer(serializers.ModelSerializer):
             actor=actor,
             content=content,
         )
+
+        # Process current record in case if previous exists
         if prev_history_record:
             prev_history_record_dict = HistoryRecordDiffSerializer(
                 instance=prev_history_record
@@ -72,9 +78,11 @@ class HistoryRecordSerializer(serializers.ModelSerializer):
             new_history_record_dict = HistoryRecordDiffSerializer(
                 instance=new_history_record
             ).data
+            # Make diff
             diff = make_diff(prev_history_record_dict, new_history_record_dict)
             new_history_record.diff = diff
 
+            # Update version
             new_history_record.version = prev_history_record.version + 1
 
             new_history_record.save()

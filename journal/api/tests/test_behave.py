@@ -10,7 +10,7 @@ class HistoryApiCaseBehaveTest(APITestCase):
             "alias": "clients",
             "name": "Clients journal",
             "type": 'objects',
-            "history_record_key": "id",
+            "history_record_key": "target_id",
             "history_record_actor": "actor.id",
             "save_diff": True
         }
@@ -23,6 +23,7 @@ class HistoryApiCaseBehaveTest(APITestCase):
             "journal": journal_id,
             "_action": "create",
             "_actor": {"name": "John Doe", "id": 2},
+            "target_id": 1,
             "name": "Client Inc.",
             "status": "new",
             "files": [1, 14],
@@ -34,6 +35,7 @@ class HistoryApiCaseBehaveTest(APITestCase):
             "journal": journal_id,
             "_action": "update",
             "_actor": {"name": "John Doe", "id": 2},
+            "target_id": 1,
             "name": "Client Inc.",
             "status": "update",
             "files": [1],
@@ -58,7 +60,8 @@ class HistoryApiCaseBehaveTest(APITestCase):
                 'journal': 1,
                 'name': 'Client Inc.',
                 'files': [1],
-                'status': 'update'
+                'status': 'update',
+                'target_id': 1
             },
             {
                 '_actor': {'id': 2, 'name': 'John Doe'},
@@ -70,7 +73,8 @@ class HistoryApiCaseBehaveTest(APITestCase):
                 'journal': 1,
                 'name': 'Client Inc.',
                 'files': [1, 14],
-                'status': 'new'
+                'status': 'new',
+                'target_id': 1
              }
         ]
 
