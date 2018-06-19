@@ -12,11 +12,11 @@ class HistoryRecordFilter(FilterSet):
     from_date = TimestampsFilter(name='created_at', lookup_expr='gte')
     to_date = TimestampsFilter(name='created_at', lookup_expr='lte')
     pk = CharFilter(method='filter_pk')
+    journal = CharFilter(name='journal__alias', lookup_expr='exact')
 
     def filter_pk(self, queryset, name, value):
         pk = int(value)
-        journal_id = int(self.data.get('journal'))
-        journal = Journal.objects.get(id=journal_id)
+        journal = queryset.first().journal
         history_record_key = journal.history_record_key
         history_record_key_field = f'content__{history_record_key}'
 

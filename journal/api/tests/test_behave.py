@@ -7,7 +7,7 @@ from journal.api.tests.factories import JournalFactory
 class HistoryApiCaseBehaveTest(APITestCase):
     def test_create_retreive_history_records(self):
         input_data = {
-            "alias": "clients",
+            "alias": "client",
             "name": "Clients journal",
             "type": 'objects',
             "history_record_key": "target_id",
@@ -18,6 +18,7 @@ class HistoryApiCaseBehaveTest(APITestCase):
                                     data=input_data, format='json')
 
         journal_id = response.data['id']
+        journal_alias = input_data['alias']
 
         input_data = {
             "journal": journal_id,
@@ -44,7 +45,7 @@ class HistoryApiCaseBehaveTest(APITestCase):
                                       data=input_data, format='json')
 
         response = self.client.get(
-            f'/api/v1.0/history/?journal={journal_id}', format='json')
+            f'/api/v1.0/history/?journal={journal_alias}', format='json')
 
         history_records = HistoryRecord.objects.all()
 
@@ -52,7 +53,7 @@ class HistoryApiCaseBehaveTest(APITestCase):
             {
                 '_actor': {'id': 2, 'name': 'John Doe'},
                 '_action': 'update',
-                '_type': 'clients',
+                '_type': 'client',
                 '_v': 1,
                 '_ts': history_records.first().created_at.timestamp(),
                 '_diff': {'files': {'delete': [14]},
@@ -66,7 +67,7 @@ class HistoryApiCaseBehaveTest(APITestCase):
             {
                 '_actor': {'id': 2, 'name': 'John Doe'},
                 '_action': 'create',
-                '_type': 'clients',
+                '_type': 'client',
                 '_v': 0,
                 '_ts': history_records.last().created_at.timestamp(),
                 '_diff': None,
