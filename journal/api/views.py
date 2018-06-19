@@ -17,5 +17,5 @@ class HistoryRecordViewSet(viewsets.ModelViewSet):
     serializer_class = HistoryRecordSerializer
     filter_backends = (filters.DjangoFilterBackend,)
     filter_class = HistoryRecordFilter
-    http_method_names = ['get', 'post']
+    # http_method_names = ['get', 'post']
 

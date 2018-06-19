@@ -85,7 +85,7 @@ class JournalViewSetTestCase(APITestCase):
         assert response.status_code == HTTP_200_OK
 
     def test_fetch_history_list(self):
-        journal = JournalFactory.create(alias='leads',
+        journal = JournalFactory.create(alias='lead',
                                         name='Leads journal')
         hr1 = HistoryRecordFactory.create(journal=journal,
                                           action='create',
@@ -103,7 +103,7 @@ class JournalViewSetTestCase(APITestCase):
                                                    'comments': [
                                                        'Hello worlds']})
         response = self.client.get(
-            f'/api/v1.0/history/?journal={journal.id}',
+            f'/api/v1.0/history/?journal={journal.alias}',
             format='json')
         assert response.status_code == HTTP_200_OK
         assert len(response.data) == 2
@@ -128,13 +128,23 @@ class JournalViewSetTestCase(APITestCase):
         assert response.status_code == HTTP_200_OK
         assert len(response.data) == 1
 
-    def test_filter_by_pk(self):
-        journal = JournalFactory.create(alias='leads',
+    def test_filter_by_journal_and_pk(self):
+        client_journal = JournalFactory.create(alias='client',
+                                        name='Clients journal',
+                                        history_record_key='target_id')
+
+        hr = HistoryRecordFactory.create(journal=client_journal,
+                                          action='create',
+                                          actor={'name': 'John Doe', 'id': 2},
+                                          content={'name': 'Client Inc.',
+                                                   'status': 'new'})
+
+        lead_journal = JournalFactory.create(alias='lead',
                                         name='Leads journal',
                                         history_record_key='target_id')
 
         # Create history records for first lead
-        hr1 = HistoryRecordFactory.create(journal=journal,
+        hr1 = HistoryRecordFactory.create(journal=lead_journal,
                                           action='create',
                                           actor={'name': 'John Doe', 'id': 2},
                                           content={'name': 'Client Inc.',
@@ -142,7 +152,7 @@ class JournalViewSetTestCase(APITestCase):
                                                    'target_id': 1,
                                                    'files': [1, 14]})
 
-        hr2 = HistoryRecordFactory.create(journal=journal,
+        hr2 = HistoryRecordFactory.create(journal=lead_journal,
                                           action='update',
                                           actor={'name': 'John Doe', 'id': 2},
                                           content={'name': 'Client Inc.',
@@ -151,7 +161,7 @@ class JournalViewSetTestCase(APITestCase):
                                                    'files': [1],
                                                    'comments': [
                                                        'Hello worlds']})
-        hr3 = HistoryRecordFactory.create(journal=journal,
+        hr3 = HistoryRecordFactory.create(journal=lead_journal,
                                           action='update',
                                           actor={'name': 'John Doe', 'id': 2},
                                           content={'name': 'Client Inc.',
@@ -162,14 +172,14 @@ class JournalViewSetTestCase(APITestCase):
                                                                 'Bye worlds']})
 
         # Create history records for second lead
-        hr4 = HistoryRecordFactory.create(journal=journal,
+        hr4 = HistoryRecordFactory.create(journal=lead_journal,
                                           action='create',
                                           actor={'name': 'Alice Cup', 'id': 3},
                                           content={'name': 'Megaclient',
                                                    'status': 'new',
                                                    'target_id': 2})
 
-        hr5 = HistoryRecordFactory.create(journal=journal,
+        hr5 = HistoryRecordFactory.create(journal=lead_journal,
                                           action='update',
                                           actor={'name': 'Alice Cup', 'id': 3},
                                           content={'name': 'Megaclient',
@@ -177,7 +187,7 @@ class JournalViewSetTestCase(APITestCase):
                                                    'target_id': 2,
                                                    'files': [2, 3]})
         response = self.client.get(
-            f'/api/v1.0/history/?journal={journal.id}&pk={1}',
+            f'/api/v1.0/history/?journal={lead_journal.alias}&pk={1}',
             format='json')
 
         assert response.status_code == HTTP_200_OK
@@ -245,68 +255,68 @@ class HistoryRecordViewSetTestCase(APITestCase):
         }
         assert diff == awaited_diff
 
-    def test_prevent_patch_history(self):
-        journal = JournalFactory.create(alias='clients',
-                                        name='Clients journal')
-        hr = HistoryRecordFactory.create(journal=journal,
-                                         action='create',
-                                         actor={'name': 'John Doe', 'id': 2},
-                                         content={'name': 'Client Inc.',
-                                                  'status': 'new',
-                                                  'files': [1, 14]},
-                                         diff={
-                                             'files': {'delete': [1]},
-                                             'status': {'update': 'update'},
-                                             '_action': {'update': 'update'}
-                                         })
-        input_data = {
-            "_journal": journal.id,
-            "_action": "create",
-        }
-        response = self.client.post(f'/api/v1.0/history/{hr.id}/',
-                                    data=input_data, format='json')
-        assert response.status_code == HTTP_405_METHOD_NOT_ALLOWED
-
-    def test_prevent_put_history(self):
-        journal = JournalFactory.create(alias='clients',
-                                        name='Clients journal')
-        hr = HistoryRecordFactory.create(journal=journal,
-                                         action='create',
-                                         actor={'name': 'John Doe', 'id': 2},
-                                         content={'name': 'Client Inc.',
-                                                  'status': 'new',
-                                                  'files': [1, 14]},
-                                         diff={
-                                             'files': {'delete': [1]},
-                                             'status': {'update': 'update'},
-                                             '_action': {'update': 'update'}
-                                         })
-        input_data = {
-            "_journal": journal.id,
-            "_action": "create",
-            "_actor": {"name": "John Doe", "id": 2},
-            "name": "Client Inc.",
-            "status": "new",
-            "files": [1, 14],
-        }
-        response = self.client.post(f'/api/v1.0/history/{hr.id}/',
-                                    data=input_data, format='json')
-        assert response.status_code == HTTP_405_METHOD_NOT_ALLOWED
-
-    def test_prevent_delete_history(self):
-        journal = JournalFactory.create(alias='clients',
-                                        name='Clients journal')
-        hr = HistoryRecordFactory.create(journal=journal,
-                                         action='create',
-                                         actor={'name': 'John Doe',
-                                                'id': 2},
-                                         content={'name': 'Client Inc.',
-                                                  'status': 'new',
-                                                  'files': [1, 14]},
-                                         diff={
-                                             'files': {'delete': [1]},
-                                             'status': {'update': 'update'},
-                                             '_action': {'update': 'update'}
-                                         })
-        response = self.client.delete(f'/api/v1.0/history/{hr.id}/')
-        assert response.status_code == HTTP_405_METHOD_NOT_ALLOWED
+    # def test_prevent_patch_history(self):
+    #     journal = JournalFactory.create(alias='clients',
+    #                                     name='Clients journal')
+    #     hr = HistoryRecordFactory.create(journal=journal,
+    #                                      action='create',
+    #                                      actor={'name': 'John Doe', 'id': 2},
+    #                                      content={'name': 'Client Inc.',
+    #                                               'status': 'new',
+    #                                               'files': [1, 14]},
+    #                                      diff={
+    #                                          'files': {'delete': [1]},
+    #                                          'status': {'update': 'update'},
+    #                                          '_action': {'update': 'update'}
+    #                                      })
+    #     input_data = {
+    #         "_journal": journal.id,
+    #         "_action": "create",
+    #     }
+    #     response = self.client.post(f'/api/v1.0/history/{hr.id}/',
+    #                                 data=input_data, format='json')
+    #     assert response.status_code == HTTP_405_METHOD_NOT_ALLOWED
+    #
+    # def test_prevent_put_history(self):
+    #     journal = JournalFactory.create(alias='clients',
+    #                                     name='Clients journal')
+    #     hr = HistoryRecordFactory.create(journal=journal,
+    #                                      action='create',
+    #                                      actor={'name': 'John Doe', 'id': 2},
+    #                                      content={'name': 'Client Inc.',
+    #                                               'status': 'new',
+    #                                               'files': [1, 14]},
+    #                                      diff={
+    #                                          'files': {'delete': [1]},
+    #                                          'status': {'update': 'update'},
+    #                                          '_action': {'update': 'update'}
+    #                                      })
+    #     input_data = {
+    #         "_journal": journal.id,
+    #         "_action": "create",
+    #         "_actor": {"name": "John Doe", "id": 2},
+    #         "name": "Client Inc.",
+    #         "status": "new",
+    #         "files": [1, 14],
+    #     }
+    #     response = self.client.post(f'/api/v1.0/history/{hr.id}/',
+    #                                 data=input_data, format='json')
+    #     assert response.status_code == HTTP_405_METHOD_NOT_ALLOWED
+    #
+    # def test_prevent_delete_history(self):
+    #     journal = JournalFactory.create(alias='clients',
+    #                                     name='Clients journal')
+    #     hr = HistoryRecordFactory.create(journal=journal,
+    #                                      action='create',
+    #                                      actor={'name': 'John Doe',
+    #                                             'id': 2},
+    #                                      content={'name': 'Client Inc.',
+    #                                               'status': 'new',
+    #                                               'files': [1, 14]},
+    #                                      diff={
+    #                                          'files': {'delete': [1]},
+    #                                          'status': {'update': 'update'},
+    #                                          '_action': {'update': 'update'}
+    #                                      })
+    #     response = self.client.delete(f'/api/v1.0/history/{hr.id}/')
+    #     assert response.status_code == HTTP_405_METHOD_NOT_ALLOWED
