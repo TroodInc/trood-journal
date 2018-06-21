@@ -7,7 +7,7 @@ from journal.api.utils import make_diff
 
 class HistoryRecordViewSetTestCase(testcases.TestCase):
     def test_make_diff_ok(self):
-        journal = JournalFactory.create(alias='clients',
+        journal = JournalFactory.create(id='client',
                                         name='Clients journal')
         hr1 = HistoryRecordFactory.create(journal=journal,
                                          action='create',
