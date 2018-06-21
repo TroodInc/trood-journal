@@ -7,56 +7,50 @@ from journal.api.utils import make_diff
 class JournalSerializer(serializers.ModelSerializer):
     class Meta:
         model = Journal
-        fields = ('id', 'alias', 'history_record_key', 'name', 'type',
-                  'history_record_actor', 'save_diff')
+        fields = ('id', 'target_key', 'name', 'type',
+                  'actor_key', 'save_diff')
 
 
 class HistoryRecordSerializer(serializers.ModelSerializer):
-    _action = serializers.CharField(source='action')
-    _type = serializers.CharField(source='journal.alias', read_only=True)
-    _v = serializers.IntegerField(source='version', read_only=True)
-    _ts = serializers.SerializerMethodField('get_created_at_timestamp')
-    _actor = serializers.JSONField(source='actor', read_only=True)
-    _diff = serializers.JSONField(source='diff', read_only=True)
+    v = serializers.IntegerField(source='version', read_only=True)
+    ts = serializers.SerializerMethodField('get_created_at_timestamp')
+    revision = serializers.SerializerMethodField()
 
     class Meta:
         model = HistoryRecord
-        fields = ('_actor', '_action', '_type', '_v', '_ts', '_diff',
-                  'content', 'journal')
-        extra_kwargs = {'content': {'read_only': True}}
-
+        fields = ('id', 'actor', 'action', 'v', 'ts', 'diff',
+                  'content', 'journal', 'revision')
+        extra_kwargs = {'content': {'write_only': True},
+                        'revision': {'read_only': True},
+                        'actor': {'read_only': True},
+                        'diff': {'read_only': True}}
 
     def get_created_at_timestamp(self, obj):
         return obj.created_at.timestamp()
-    
+
+    def get_revision(self, obj):
+        prev = obj.prev
+        if not prev:
+            return obj.content
+        return prev.content
+
     def to_internal_value(self, data):
+        """
+        Skip default process to get raw data
+        """
         input_data = data.copy()
-        content = {}
-        for k in data.keys():
-            # Put fields strictly related to object to content dict
-            if not k.startswith('_'):
-                content[k] = data[k]
-                # And drop them from input data
-                del input_data[k]
-        input_data['content'] = content
         return input_data
 
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        data.update(data['content'])
-        del data['content']
-        return data
-
     def create(self, validated_data):
-        action = validated_data.get('_action')
-        actor = validated_data.get('_actor')
+        action = validated_data.get('action')
+        actor = validated_data.get('actor')
 
         content = validated_data.get('content')
 
-        journal_id = content.get('journal')
+        journal_id = validated_data.get('journal')
         journal = Journal.objects.get(id=journal_id)
 
-        target_id = content.get(journal.history_record_key)
+        target_id = content.get(journal.target_key)
 
         prev_history_record = HistoryRecord.objects.last_for_target(
             journal=journal,
@@ -72,19 +66,23 @@ class HistoryRecordSerializer(serializers.ModelSerializer):
 
         # Process current record in case if previous exists
         if prev_history_record:
+            # Make diff
             prev_history_record_dict = HistoryRecordDiffSerializer(
                 instance=prev_history_record
             ).data
             new_history_record_dict = HistoryRecordDiffSerializer(
                 instance=new_history_record
             ).data
-            # Make diff
             diff = make_diff(prev_history_record_dict, new_history_record_dict)
             new_history_record.diff = diff
+            new_history_record.save()
+
+            # Save previous version to use as revision
+            new_history_record.prev = prev_history_record
+            new_history_record.save()
 
             # Update version
             new_history_record.version = prev_history_record.version + 1
-
             new_history_record.save()
 
         return new_history_record
@@ -93,5 +91,11 @@ class HistoryRecordSerializer(serializers.ModelSerializer):
 class HistoryRecordDiffSerializer(HistoryRecordSerializer):
     class Meta:
         model = HistoryRecord
-        fields = ('_actor', 'content',)
+        fields = ('actor', 'content',)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data.update(data['content'])
+        del data['content']
+        return data
 

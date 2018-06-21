@@ -7,76 +7,87 @@ from journal.api.tests.factories import JournalFactory
 class HistoryApiCaseBehaveTest(APITestCase):
     def test_create_retreive_history_records(self):
         input_data = {
-            "alias": "client",
+            "id": "client",
             "name": "Clients journal",
             "type": 'objects',
-            "history_record_key": "target_id",
-            "history_record_actor": "actor.id",
+            "target_key": "id",
+            "actor_key": "id",
             "save_diff": True
         }
         response = self.client.post(f'/api/v1.0/journals/',
                                     data=input_data, format='json')
 
         journal_id = response.data['id']
-        journal_alias = input_data['alias']
 
         input_data = {
             "journal": journal_id,
-            "_action": "create",
-            "_actor": {"name": "John Doe", "id": 2},
-            "target_id": 1,
-            "name": "Client Inc.",
-            "status": "new",
-            "files": [1, 14],
+            "action": "create",
+            "actor": {"name": "John Doe", "id": 2},
+            "content": {
+                "id": 1,
+                "name": "Client Inc.",
+                "status": "new",
+                "files": [1, 14]
+            }
+
         }
         response = self.client.post(f'/api/v1.0/history/',
-                                      data=input_data, format='json')
+                                    data=input_data, format='json')
 
         input_data = {
             "journal": journal_id,
-            "_action": "update",
-            "_actor": {"name": "John Doe", "id": 2},
-            "target_id": 1,
-            "name": "Client Inc.",
-            "status": "update",
-            "files": [1],
+            "action": "update",
+            "actor": {"name": "John Doe", "id": 2},
+            "content": {
+                "id": 1,
+                "name": "Client Inc.",
+                "status": "update",
+                "files": [1]
+            }
+
         }
         response = self.client.post(f'/api/v1.0/history/',
-                                      data=input_data, format='json')
+                                    data=input_data, format='json')
 
         response = self.client.get(
-            f'/api/v1.0/history/?journal={journal_alias}', format='json')
+            f'/api/v1.0/history/?journal={journal_id}', format='json')
 
         history_records = HistoryRecord.objects.all()
 
-        awaited_data = [
-            {
-                '_actor': {'id': 2, 'name': 'John Doe'},
-                '_action': 'update',
-                '_type': 'client',
-                '_v': 1,
-                '_ts': history_records.first().created_at.timestamp(),
-                '_diff': {'files': {'delete': [14]},
-                          'status': {'update': 'update'}},
-                'journal': 1,
-                'name': 'Client Inc.',
-                'files': [1],
-                'status': 'update',
-                'target_id': 1
+        awaited_data = [{
+            'id': history_records[0].id,
+            'actor': {
+                'id': 2,
+                'name': 'John Doe'
             },
-            {
-                '_actor': {'id': 2, 'name': 'John Doe'},
-                '_action': 'create',
-                '_type': 'client',
-                '_v': 0,
-                '_ts': history_records.last().created_at.timestamp(),
-                '_diff': None,
-                'journal': 1,
+            'action': 'update',
+            'v': 1,
+            'ts': history_records[0].created_at.timestamp(),
+            'diff': {
+                'files': {'delete': [14]},
+                'status': {'update': 'update'}
+            },
+            'journal': 'client',
+            'revision': {
+                'id': 1,
                 'name': 'Client Inc.',
                 'files': [1, 14],
-                'status': 'new',
-                'target_id': 1
-             }
-        ]
-
+                'status': 'new'
+            }
+        }, {
+            'id': history_records[1].id,
+            'actor': {
+                'id': 2,
+                'name': 'John Doe'
+            },
+            'action': 'create',
+            'v': 0,
+            'ts': history_records[1].created_at.timestamp(),
+            'diff': None,
+            'journal': 'client',
+            'revision': {
+                'id': 1, 'name': 'Client Inc.',
+                'files': [1, 14],
+                'status': 'new'}
+        }]
         assert response.json() == awaited_data

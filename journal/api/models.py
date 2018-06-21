@@ -3,11 +3,11 @@ from django.db import models
 
 
 class Journal(models.Model):
-    alias = models.CharField(max_length=255)
+    id = models.CharField(max_length=255, primary_key=True)
     name = models.CharField(max_length=255)
     type = models.CharField(max_length=255, default='objects')
-    history_record_key = models.CharField(max_length=255, default='pk')
-    history_record_actor = models.CharField(max_length=255, default='actor.id')
+    target_key = models.CharField(max_length=255, default='id')
+    actor_key = models.CharField(max_length=255, default='id')
     save_diff = models.BooleanField(default=True)
 
 
@@ -24,7 +24,7 @@ class HistoryRecordManager(models.Manager):
         # Find previous history record
         if records_content_not_null.count() > 0:
             history_for_target = journal.history_records.filter(
-                content__target_id=target_id
+                content__id=target_id
             )
             if history_for_target.count() > 0:
                 prev_history_record = history_for_target.first()
@@ -33,6 +33,7 @@ class HistoryRecordManager(models.Manager):
 
 class HistoryRecord(models.Model):
     journal = models.ForeignKey(Journal, related_name='history_records')
+    prev = models.ForeignKey('self', null=True)
     actor = JSONField()
     action = models.CharField(max_length=255)
     version = models.IntegerField(default=0)
@@ -43,3 +44,7 @@ class HistoryRecord(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+    @property
+    def revision(self):
+        return self.prev

@@ -12,17 +12,17 @@ class HistoryRecordFilter(FilterSet):
     from_date = TimestampsFilter(name='created_at', lookup_expr='gte')
     to_date = TimestampsFilter(name='created_at', lookup_expr='lte')
     pk = CharFilter(method='filter_pk')
-    journal = CharFilter(name='journal__alias', lookup_expr='exact')
+    journal = CharFilter(name='journal__id', lookup_expr='exact')
 
     def filter_pk(self, queryset, name, value):
         pk = int(value)
         journal = queryset.first().journal
-        history_record_key = journal.history_record_key
-        history_record_key_field = f'content__{history_record_key}'
+        target_key = journal.target_key
+        content_target_key = f'content__{target_key}'
 
         lookup = {
             'journal': journal,
-            history_record_key_field: pk
+            content_target_key: pk
         }
 
         history_records = queryset.filter(**lookup)

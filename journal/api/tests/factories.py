@@ -7,10 +7,10 @@ class JournalFactory(factory.DjangoModelFactory):
     class Meta:
         model = Journal
 
-    alias = 'clients'
+    id = 'client'
     type = 'objects'
-    history_record_key = 'id'
-    history_record_actor = 'actor.id'
+    target_key = 'id'
+    actor_key = 'id'
     save_diff = True
 
 
