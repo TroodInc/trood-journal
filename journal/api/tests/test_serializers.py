@@ -61,6 +61,7 @@ class HistoryRecordSerializerTestCase(APITestCase):
         awaited_data = {'actor': {'name': 'John Doe', 'id': 2},
                         'action': 'create',
                         'v': 0,
+                        'id': hr.id,
                         'ts': hr.created_at.timestamp(),
                         'journal': hr.journal.id,
                         'diff': {

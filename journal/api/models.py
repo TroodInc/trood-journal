@@ -1,8 +1,10 @@
 from django.contrib.postgres.fields import JSONField
+from django.utils.translation import ugettext_lazy as _
 from django.db import models
 
 
 class Journal(models.Model):
+    owner = models.IntegerField(_('Owner'), null=True, default=None)
     id = models.CharField(max_length=255, primary_key=True)
     name = models.CharField(max_length=255)
     type = models.CharField(max_length=255, default='objects')

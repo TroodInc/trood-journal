@@ -1,10 +1,18 @@
 from rest_framework.test import APITestCase
 
 from journal.api.models import HistoryRecord
-from journal.api.tests.factories import JournalFactory
+from trood_auth_client.authentication import TroodUser
+
+trood_user = TroodUser({
+    "id": 1,
+})
 
 
 class HistoryApiCaseBehaveTest(APITestCase):
+    def setUp(self):
+        self.client.force_authenticate(user=trood_user)
+
+
     def test_create_retreive_history_records(self):
         input_data = {
             "id": "client",
@@ -14,7 +22,7 @@ class HistoryApiCaseBehaveTest(APITestCase):
             "actor_key": "id",
             "save_diff": True
         }
-        response = self.client.post(f'/api/v1.0/journals/',
+        response = self.client.post(f'/api/v1.0/journal/',
                                     data=input_data, format='json')
 
         journal_id = response.data['id']
@@ -40,7 +48,7 @@ class HistoryApiCaseBehaveTest(APITestCase):
             "actor": {"name": "John Doe", "id": 2},
             "content": {
                 "id": 1,
-                "name": "Client Inc.",
+                # "name": "Client Inc.",
                 "status": "update",
                 "files": [1]
             }
@@ -90,4 +98,5 @@ class HistoryApiCaseBehaveTest(APITestCase):
                 'files': [1, 14],
                 'status': 'new'}
         }]
+
         assert response.json() == awaited_data
