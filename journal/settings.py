@@ -87,14 +87,6 @@ class BaseConfiguration(Configuration):
     }
 
 
-    # Password validation
-    # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
-
-    AUTH_PASSWORD_VALIDATORS = [
-
-    ]
-
-
     # Internationalization
     # https://docs.djangoproject.com/en/1.11/topics/i18n/
 
@@ -108,7 +100,12 @@ class BaseConfiguration(Configuration):
 
     USE_TZ = True
 
+    TROOD_AUTH_SERVICE_URL = os.environ.get('TROOD_AUTH_SERVICE_URL', 'http://authorization.trood:8000/')
+
     REST_FRAMEWORK = {
+        'DEFAULT_AUTHENTICATION_CLASSES': (
+            'trood_auth_client.authentication.TroodTokenAuthentication',
+        ),
         'PAGINATE_BY': 10,
     }
 
