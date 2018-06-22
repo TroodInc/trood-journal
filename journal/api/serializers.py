@@ -66,6 +66,22 @@ class HistoryRecordSerializer(serializers.ModelSerializer):
 
         # Process current record in case if previous exists
         if prev_history_record:
+            # Save previous version to use as revision
+            new_history_record.prev = prev_history_record
+            new_history_record.save()
+
+            # Update content of newly created record
+            # by using income data and previous record
+            new_history_content = {}
+            new_history_content.update(new_history_record.prev.content)
+            new_history_content.update(new_history_record.content)
+            new_history_record.content = new_history_content
+            new_history_record.save()
+
+            # Update version
+            new_history_record.version = prev_history_record.version + 1
+            new_history_record.save()
+
             # Make diff
             prev_history_record_dict = HistoryRecordDiffSerializer(
                 instance=prev_history_record
@@ -73,16 +89,9 @@ class HistoryRecordSerializer(serializers.ModelSerializer):
             new_history_record_dict = HistoryRecordDiffSerializer(
                 instance=new_history_record
             ).data
+
             diff = make_diff(prev_history_record_dict, new_history_record_dict)
             new_history_record.diff = diff
-            new_history_record.save()
-
-            # Save previous version to use as revision
-            new_history_record.prev = prev_history_record
-            new_history_record.save()
-
-            # Update version
-            new_history_record.version = prev_history_record.version + 1
             new_history_record.save()
 
         return new_history_record
