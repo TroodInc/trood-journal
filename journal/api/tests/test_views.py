@@ -6,7 +6,11 @@ from rest_framework.test import APITestCase, APIClient
 
 from journal.api.models import HistoryRecord
 from journal.api.tests.factories import JournalFactory, HistoryRecordFactory
+from trood_auth_client.authentication import TroodUser
 
+trood_user = TroodUser({
+    "id": 1,
+})
 
 TS_DELTA = 2
 
@@ -41,8 +45,10 @@ def _initialize_journal_data():
 
 
 class JournalViewSetTestCase(APITestCase):
+
     def setUp(self):
         self.client = APIClient()
+        self.client.force_authenticate(user=trood_user)
 
     def test_create_journal_ok(self):
         data = {
@@ -197,6 +203,7 @@ class JournalViewSetTestCase(APITestCase):
 class HistoryRecordViewSetTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
+        self.client.force_authenticate(user=trood_user)
 
     def test_create_history_record_ok(self):
         journal = JournalFactory.create(id='lead',

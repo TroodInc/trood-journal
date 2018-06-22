@@ -1,10 +1,18 @@
 from rest_framework.test import APITestCase
 
 from journal.api.models import HistoryRecord
-from journal.api.tests.factories import JournalFactory
+from trood_auth_client.authentication import TroodUser
+
+trood_user = TroodUser({
+    "id": 1,
+})
 
 
 class HistoryApiCaseBehaveTest(APITestCase):
+    def setUp(self):
+        self.client.force_authenticate(user=trood_user)
+
+
     def test_create_retreive_history_records(self):
         input_data = {
             "id": "client",
