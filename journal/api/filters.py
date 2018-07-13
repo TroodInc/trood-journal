@@ -1,4 +1,5 @@
-from django_filters import FilterSet, DateTimeFilter, CharFilter
+from django.core.exceptions import ObjectDoesNotExist
+from django_filters import FilterSet, DateTimeFilter, CharFilter, exceptions
 
 from journal.api.fields import TimeStampField
 from journal.api.models import HistoryRecord, Journal
@@ -15,18 +16,21 @@ class HistoryRecordFilter(FilterSet):
     journal = CharFilter(name='journal__id', lookup_expr='exact')
 
     def filter_pk(self, queryset, name, value):
-        pk = int(value)
-        journal = queryset.first().journal
-        target_key = journal.target_key
-        content_target_key = f'content__{target_key}'
+        journal = self.request.query_params.get('journal', None)
 
-        lookup = {
-            'journal': journal,
-            content_target_key: pk
-        }
+        if journal:
+            pk = int(value)
 
-        history_records = queryset.filter(**lookup)
-        return history_records
+            try:
+                journal_object = Journal.objects.get(id=journal)
+                target_key = journal_object.target_key
+
+                return queryset.filter(**{f'content__{target_key}': pk})
+            except ObjectDoesNotExist:
+                raise exceptions.FieldError({"err": "Journal {} not found".format(journal)})
+
+        else:
+            raise exceptions.FieldError({"err": "You can't filter by `pk` without `journal` specifying ".format(journal)})
 
     class Meta:
         model = HistoryRecord
