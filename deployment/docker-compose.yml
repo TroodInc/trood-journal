@@ -5,9 +5,10 @@ services:
     build:
       context: ../
       dockerfile: deployment/Dockerfile
+    env_file: ../.env
     container_name: journal
     environment:
-      DJANGO_CONFIGURATION: Production
+      DJANGO_CONFIGURATION: Development
     networks:
       - test-network
 

@@ -158,6 +158,9 @@ class BaseConfiguration(Configuration):
         'release': 'dev'
     }
 
+    SERVICE_DOMAIN = os.environ.get("SERVICE_DOMAIN")
+    SERVICE_AUTH_SECRET = os.environ.get("SERVICE_AUTH_SECRET")
+
 
 class Development(BaseConfiguration):
     DEBUG = True
