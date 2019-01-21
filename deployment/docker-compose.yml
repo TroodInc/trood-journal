@@ -6,8 +6,6 @@ services:
       context: ../
       dockerfile: deployment/Dockerfile
     container_name: journal
-    networks:
-      - test-network
 
   journal_postgres:
     image: postgres:9.5
@@ -17,9 +15,3 @@ services:
       POSTGRES_DB: journal
       POSTGRES_USER: journal
       POSTGRES_PASSWORD: journal
-    networks:
-      - test-network
-
-networks:
-  test-network:
-    driver: bridge
