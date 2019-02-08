@@ -6,6 +6,8 @@ services:
       context: ../
       dockerfile: deployment/Dockerfile
     container_name: journal
+    ports:
+      - "8000:8000"
 
   journal_postgres:
     image: postgres:9.5
