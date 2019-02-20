@@ -7,3 +7,7 @@ __pycache__
 .env
 .vscode
 tmp
+.DS_Store
+
+docs/_build
+docs/autoapi
