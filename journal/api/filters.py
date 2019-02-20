@@ -12,20 +12,25 @@ class TimestampsFilter(DateTimeFilter):
 class HistoryRecordFilter(FilterSet):
     from_date = TimestampsFilter(name='created_at', lookup_expr='gte')
     to_date = TimestampsFilter(name='created_at', lookup_expr='lte')
-    pk = CharFilter(method='filter_pk')
+    pk = CharFilter(method='filter_custom_pk')
+    actor = CharFilter(method='filter_custom_pk')
     journal = CharFilter(name='journal__id', lookup_expr='exact')
 
-    def filter_pk(self, queryset, name, value):
+    def filter_custom_pk(self, queryset, name, value):
         journal = self.request.query_params.get('journal', None)
 
         if journal:
-            pk = int(value)
-
             try:
                 journal_object = Journal.objects.get(id=journal)
-                target_key = journal_object.target_key
 
-                return queryset.filter(**{f'content__{target_key}': pk})
+                if name == "pk":
+                    key = journal_object.target_key
+                    field = "content"
+                if name == "actor":
+                    key = journal_object.actor_key
+                    field = "actor"
+
+                return queryset.filter(**{f'{field}__{key}': int(value)})
             except ObjectDoesNotExist:
                 raise exceptions.FieldError({"err": "Journal {} not found".format(journal)})
 
@@ -34,4 +39,4 @@ class HistoryRecordFilter(FilterSet):
 
     class Meta:
         model = HistoryRecord
-        fields = ['journal', 'action', 'from_date', 'to_date']
+        fields = ['journal', 'action', 'from_date', 'to_date', 'actor']
