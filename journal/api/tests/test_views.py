@@ -1,7 +1,6 @@
 from time import sleep
 
-from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, \
-    HTTP_204_NO_CONTENT, HTTP_301_MOVED_PERMANENTLY, HTTP_405_METHOD_NOT_ALLOWED
+from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CONTENT
 from rest_framework.test import APITestCase, APIClient
 
 from journal.api.models import HistoryRecord
@@ -16,14 +15,11 @@ TS_DELTA = 2
 
 
 def _initialize_journal_data():
-    journal = JournalFactory.create(id='lead',
-                                    name='Leads journal')
-    hr1 = HistoryRecordFactory.create(journal=journal,
-                                      action='create',
-                                      actor={'name': 'John Doe', 'id': 2},
-                                      content={'name': 'Client Inc.',
-                                               'status': 'new',
-                                               'files': [1, 14]})
+    journal = JournalFactory.create(id='lead', name='Leads journal')
+    hr1 = HistoryRecordFactory.create(
+        journal=journal, action='create', actor={'name': 'John Doe', 'id': 2},
+        content={'name': 'Client Inc.', 'status': 'new', 'files': [1, 14]}
+    )
 
     sleep(3)
 
@@ -84,30 +80,27 @@ class JournalViewSetTestCase(APITestCase):
         assert response.status_code == HTTP_204_NO_CONTENT
 
     def test_fetch_history_empty_200(self):
-        journal = JournalFactory.create(id='lead',
-                                        name='Leads journal')
-        response = self.client.get(f'/api/v1.0/history/?journal={journal.id}',
-                                   format='json')
+        journal = JournalFactory.create(id='lead', name='Leads journal')
+
+        response = self.client.get(f'/api/v1.0/history/?journal={journal.id}', format='json')
+
         assert response.status_code == HTTP_200_OK
 
     def test_fetch_history_list(self):
-        journal = JournalFactory.create(id='lead',
-                                        name='Leads journal')
-        hr1 = HistoryRecordFactory.create(journal=journal,
-                                          action='create',
-                                          actor={'name': 'John Doe', 'id': 2},
-                                          content={'name': 'Client Inc.',
-                                                   'status': 'new',
-                                                   'files': [1, 14]})
+        journal = JournalFactory.create(id='lead', name='Leads journal')
 
-        hr2 = HistoryRecordFactory.create(journal=journal,
-                                          action='update',
-                                          actor={'name': 'John Doe', 'id': 2},
-                                          content={'name': 'Client Inc.',
-                                                   'status': 'update',
-                                                   'files': [1],
-                                                   'comments': [
-                                                       'Hello worlds']})
+        hr1 = HistoryRecordFactory.create(
+            journal=journal, action='create',
+            actor={'name': 'John Doe', 'id': 2},
+            content={'name': 'Client Inc.', 'status': 'new', 'files': [1, 14]}
+        )
+
+        hr2 = HistoryRecordFactory.create(
+            journal=journal, action='update',
+            actor={'name': 'John Doe', 'id': 2},
+            content={'name': 'Client Inc.', 'status': 'update', 'files': [1], 'comments': ['Hello worlds']}
+        )
+
         response = self.client.get(
             f'/api/v1.0/history/?journal={journal.id}',
             format='json')
@@ -135,69 +128,73 @@ class JournalViewSetTestCase(APITestCase):
         assert len(response.data) == 1
 
     def test_filter_by_journal_and_pk(self):
-        client_journal = JournalFactory.create(id='client',
-                                        name='Clients journal',
-                                        target_key='target_id')
+        client_journal = JournalFactory.create(id='client', name='Clients journal', target_key='target_id')
 
-        hr = HistoryRecordFactory.create(journal=client_journal,
-                                          action='create',
-                                          actor={'name': 'John Doe', 'id': 2},
-                                          content={'name': 'Client Inc.',
-                                                   'status': 'new'})
+        hr = HistoryRecordFactory.create(
+            journal=client_journal, action='create',
+            actor={'name': 'John Doe', 'id': 2},
+            content={'name': 'Client Inc.', 'status': 'new'}
+        )
 
-        lead_journal = JournalFactory.create(id='lead',
-                                        name='Leads journal',
-                                        target_key='target_id')
+        lead_journal = JournalFactory.create(id='lead', name='Leads journal', target_key='target_id')
 
         # Create history records for first lead
-        hr1 = HistoryRecordFactory.create(journal=lead_journal,
-                                          action='create',
-                                          actor={'name': 'John Doe', 'id': 2},
-                                          content={'name': 'Client Inc.',
-                                                   'status': 'new',
-                                                   'target_id': 1,
-                                                   'files': [1, 14]})
+        hr1 = HistoryRecordFactory.create(
+            journal=lead_journal, action='create',
+            actor={'name': 'John Doe', 'id': 2},
+            content={'name': 'Client Inc.', 'status': 'new', 'target_id': 1, 'files': [1, 14]}
+        )
 
-        hr2 = HistoryRecordFactory.create(journal=lead_journal,
-                                          action='update',
-                                          actor={'name': 'John Doe', 'id': 2},
-                                          content={'name': 'Client Inc.',
-                                                   'status': 'update',
-                                                   'target_id': 1,
-                                                   'files': [1],
-                                                   'comments': [
-                                                       'Hello worlds']})
-        hr3 = HistoryRecordFactory.create(journal=lead_journal,
-                                          action='update',
-                                          actor={'name': 'John Doe', 'id': 2},
-                                          content={'name': 'Client Inc.',
-                                                   'status': 'update',
-                                                   'target_id': 1,
-                                                   'files': [1],
-                                                   'comments': ['Hello worlds',
-                                                                'Bye worlds']})
+        hr2 = HistoryRecordFactory.create(
+            journal=lead_journal, action='update',
+            actor={'name': 'John Doe', 'id': 2},
+            content={'name': 'Client Inc.', 'status': 'update', 'target_id': 1, 'files': [1], 'comments': ['Hello worlds']}
+        )
+
+        hr3 = HistoryRecordFactory.create(
+            journal=lead_journal, action='update',
+            actor={'name': 'John Doe', 'id': 2},
+            content={'name': 'Client Inc.', 'status': 'update', 'target_id': 1, 'files': [1], 'comments': ['Hello worlds', 'Bye worlds']}
+        )
 
         # Create history records for second lead
-        hr4 = HistoryRecordFactory.create(journal=lead_journal,
-                                          action='create',
-                                          actor={'name': 'Alice Cup', 'id': 3},
-                                          content={'name': 'Megaclient',
-                                                   'status': 'new',
-                                                   'target_id': 2})
+        hr4 = HistoryRecordFactory.create(
+            journal=lead_journal, action='create',
+            actor={'name': 'Alice Cup', 'id': 3},
+            content={'name': 'Megaclient', 'status': 'new', 'target_id': 2}
+        )
 
-        hr5 = HistoryRecordFactory.create(journal=lead_journal,
-                                          action='update',
-                                          actor={'name': 'Alice Cup', 'id': 3},
-                                          content={'name': 'Megaclient',
-                                                   'status': 'update',
-                                                   'target_id': 2,
-                                                   'files': [2, 3]})
-        response = self.client.get(
-            f'/api/v1.0/history/?journal={lead_journal.id}&pk={1}',
-            format='json')
+        hr5 = HistoryRecordFactory.create(
+            journal=lead_journal, action='update',
+            actor={'name': 'Alice Cup', 'id': 3},
+            content={'name': 'Megaclient', 'status': 'update', 'target_id': 2, 'files': [2, 3]}
+        )
+
+        response = self.client.get(f'/api/v1.0/history/?journal={lead_journal.id}&pk={1}', format='json')
 
         assert response.status_code == HTTP_200_OK
         assert len(response.data) == 3
+
+    def test_filter_by_journal_and_actor(self):
+        client_journal = JournalFactory.create(id='client', name='Clients journal')
+
+        hr = HistoryRecordFactory.create(
+            journal=client_journal, action='create',
+            actor={'name': 'John Doe', 'id': 1},
+            content={'name': 'Client Inc.', 'status': 'new'}
+        )
+
+        hr2 = HistoryRecordFactory.create(
+            journal=client_journal, action='create',
+            actor={'name': 'Jane Snow', 'id': 2},
+            content={'name': 'Bottles CO.', 'status': 'new'}
+        )
+
+        response = self.client.get('/api/v1.0/history/', data={'journal': 'client', "actor": 2}, format='json')
+
+        assert response.status_code == HTTP_200_OK
+        assert len(response.data) == 1
+        assert response.data[0]['id'] == hr2.id
 
 
 class HistoryRecordViewSetTestCase(APITestCase):
@@ -206,12 +203,12 @@ class HistoryRecordViewSetTestCase(APITestCase):
         self.client.force_authenticate(user=trood_user)
 
     def test_create_history_record_ok(self):
-        journal = JournalFactory.create(id='lead',
-                                        name='Leads journal')
+        journal = JournalFactory.create(id='lead', name='Leads journal')
+
         data = {
             "journal": "lead",
             "action": "update",
-            "actor": { "name": "John Doe", "id": 2 },
+            "actor": {"name": "John Doe", "id": 2},
             "content": {
                 "id": 1,
                 "name": "Client Inc.",
@@ -220,14 +217,11 @@ class HistoryRecordViewSetTestCase(APITestCase):
                 "comments": [12]
             }
         }
-        response = self.client.post('/api/v1.0/history/', data=data,
-                                    format='json')
+        response = self.client.post('/api/v1.0/history/', data=data, format='json')
         assert response.status_code == HTTP_201_CREATED
 
     def test_create_history_record_diff_ok(self):
-        journal = JournalFactory.create(id='client',
-                                        target_key='id',
-                                        name='Clients journal')
+        journal = JournalFactory.create(id='client', target_key='id', name='Clients journal')
         input_data = {
             "journal": journal.id,
             "action": "create",
@@ -240,8 +234,7 @@ class HistoryRecordViewSetTestCase(APITestCase):
             }
 
         }
-        response = self.client.post(f'/api/v1.0/history/',
-                                    data=input_data, format='json')
+        response = self.client.post(f'/api/v1.0/history/', data=input_data, format='json')
         assert response.status_code == 201
 
         input_data = {
@@ -255,12 +248,10 @@ class HistoryRecordViewSetTestCase(APITestCase):
                 "files": [1],
             }
         }
-        response = self.client.post(f'/api/v1.0/history/',
-                                    data=input_data, format='json')
+        response = self.client.post(f'/api/v1.0/history/', data=input_data, format='json')
         assert response.status_code == 201
 
-        response = self.client.get(
-            f'/api/v1.0/history/?journal={journal.id}', format='json')
+        response = self.client.get(f'/api/v1.0/history/?journal={journal.id}', format='json')
 
         last_history_record = HistoryRecord.objects.first()
         diff = last_history_record.diff
