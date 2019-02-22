@@ -1,6 +1,6 @@
 import os
 
-from configurations import Configuration, values
+from configurations import Configuration
 
 import dj_database_url
 
@@ -18,9 +18,7 @@ class BaseConfiguration(Configuration):
     # DOTENV = os.path.join(BASE_DIR, '.env')
 
     # SECURITY WARNING: keep the secret key used in production secret!
-    SECRET_KEY = values.Value(
-        '3@a)-cbt514^!a%qiotx$su4%29p@dxfrd-qb(oouzbp^@!+gr', environ_prefix=''
-    )
+    SECRET_KEY = '3@a)-cbt514^!a%qiotx$su4%29p@dxfrd-qb(oouzbp^@!+gr'
 
     # FIXME: we must setup that list
     ALLOWED_HOSTS = ['*']
@@ -34,12 +32,12 @@ class BaseConfiguration(Configuration):
         )
     }
 
-    TROOD_AUTH_SERVICE_URL = values.URLValue(
-        'http://authorization.trood:8000/', environ_prefix=''
-    )
+    TROOD_AUTH_SERVICE_URL =  os.environ.get(
+        'TROOD_AUTH_SERVICE_URL', 'http://authorization.trood:8000/'
+        )
 
-    SERVICE_DOMAIN = values.Value('', environ_prefix='')
-    SERVICE_AUTH_SECRET = values.Value('', environ_prefix='')
+    SERVICE_DOMAIN = os.environ.get('SERVICE_DOMAIN')
+    SERVICE_AUTH_SECRET = os.environ.get('SERVICE_AUTH_SECRET')
 
     # Application definition
 
