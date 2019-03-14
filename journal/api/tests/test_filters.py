@@ -25,10 +25,10 @@ class FiltersTestCase(testcases.TestCase):
 
         filters = RQLFilterBackend.make_query(parsed)
 
-        assert str(filters) == str([Q(a__exact='1', b__gt='2', c__lt='3', e__in=['4', '5', '6'])])
+        assert str(filters) == str([Q(a__exact=1, b__gt=2, c__lt=3, e__in=[4, 5, 6])])
 
     def test_make_filters_nested(self):
         parsed = RQLFilterBackend.parse_rql('and(or(eq(a,1),gt(b,2)),and(lt(c,3),gt(e,4)))')
         filters = RQLFilterBackend.make_query(parsed)
 
-        assert str(filters) == str([(Q(a__exact='1') | Q(b__gt='2')) & Q(c__lt='3', e__gt='4')])
+        assert str(filters) == str([(Q(a__exact=1) | Q(b__gt=2)) & Q(c__lt=3, e__gt=4)])

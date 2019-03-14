@@ -8,7 +8,7 @@ from django_filters import FilterSet, DateTimeFilter, CharFilter, exceptions, Fi
 from django_filters.constants import EMPTY_VALUES
 
 from django.db.models import Q
-from pyparsing import Literal, Word, alphas, alphanums, Group, Forward, delimitedList, ParseException, ZeroOrMore
+from pyparsing import Literal, Word, alphas, alphanums, Group, Forward, delimitedList, ParseException
 from rest_framework.filters import BaseFilterBackend
 
 from journal.api.fields import TimeStampField
@@ -112,10 +112,6 @@ class RQLFilterBackend(BaseFilterBackend):
     AGGREGATE = (AND | OR) + OB + delimitedList(NESTED_CONDS, ',') + CB
     COND = Group(SIMPLE_COND) | Group(AGGREGATE)
     NESTED_CONDS << COND
-    #
-    # COND = Group(SIMPLE_COND) | Group(NESTED_CONDS)
-    # CONDS = (AND | OR) + OB + delimitedList(COND, ',') + CB
-    # NESTED_CONDS << CONDS
 
     QUERY = NESTED_CONDS
 
@@ -141,7 +137,7 @@ class RQLFilterBackend(BaseFilterBackend):
                 conditions.append(reduce(__or__, res) if res else [])
             else:
                 field = '{}__{}'.format(fn[1].replace('.', '__'), fn[0])
-                conditions.append(Q(**{field: fn[2]}))
+                conditions.append(Q(**{field: convert_numeric(fn[2])}))
         return conditions
 
     def filter_queryset(self, request, queryset, view):
@@ -158,3 +154,17 @@ class RQLFilterBackend(BaseFilterBackend):
                 qs = qs.filter(*condition)
 
         return qs
+
+
+def convert_numeric(val):
+    if type(val) is str:
+        if val.isnumeric():
+            if '.' in val:
+                val = float(val)
+            else:
+                val = int(val)
+    elif type(val) is list:
+        for i, a in enumerate(val):
+            val[i] = convert_numeric(a)
+
+    return val
