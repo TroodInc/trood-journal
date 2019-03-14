@@ -196,6 +196,29 @@ class JournalViewSetTestCase(APITestCase):
         assert len(response.data) == 1
         assert response.data[0]['id'] == hr2.id
 
+    def test_filter_by_rql(self):
+        client_journal = JournalFactory.create(id='client', name='Clients journal')
+
+        hr1 = HistoryRecordFactory.create(
+            journal=client_journal, action='create',
+            actor={'name': 'John Doe', 'id': 1},
+            content={'name': 'Client Inc.', 'status': 'new'}
+        )
+
+        hr2 = HistoryRecordFactory.create(
+            journal=client_journal, action='create',
+            actor={'name': 'Jane Snow', 'id': 2},
+            content={'name': 'Bottles CO.', 'status': 'old'}
+        )
+
+        response = self.client.get(
+            '/api/v1.0/history/', data={'rql': 'and(eq(journal_id,client), eq(content.status,old))'}, format='json'
+        )
+
+        assert response.status_code == HTTP_200_OK
+        assert len(response.data) == 1
+        assert response.data[0]['id'] == hr2.id
+
 
 class HistoryRecordViewSetTestCase(APITestCase):
     def setUp(self):
