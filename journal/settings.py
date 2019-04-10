@@ -147,11 +147,13 @@ class BaseConfiguration(Configuration):
         },
     }
 
-    # FIXME: must be setupable
-    RAVEN_CONFIG = {
-        'dsn': 'http://f9005dc66030415c8e5e00c19618b83a:3c1b59780b2047329e5aa82804ecdb34@sentry.dev.trood.ru/6',
-        'release': 'dev'
-    }
+    ENABLE_RAVEN = os.environ.get('ENABLE_RAVEN', "False")
+
+    if ENABLE_RAVEN == "True":
+        RAVEN_CONFIG = {
+            'dsn': os.environ.get('RAVEN_CONFIG_DSN'),
+            'release': os.environ.get('RAVEN_CONFIG_RELEASE')
+        }
 
     STATIC_URL = '/static/'
 
