@@ -101,7 +101,7 @@ class RQLFilterBackend(BaseFilterBackend):
     CM = Literal(',').suppress()
 
     NAME = Word(alphas + '_.', alphanums + '_.')
-    VALUE = Word(alphanums) | Literal('"').suppress() + Word(alphanums + ' ') + Literal('"').suppress()
+    VALUE = Word(alphanums + '_.') | Literal('"').suppress() + Word(alphanums + '_.') + Literal('"').suppress()
 
     ARRAY = OB + delimitedList(VALUE, ',') + CB
     ARRAY = ARRAY.setParseAction(lambda s, loc, toks: [toks])
