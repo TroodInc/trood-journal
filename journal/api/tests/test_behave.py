@@ -3,6 +3,8 @@ from rest_framework.test import APITestCase
 from journal.api.models import HistoryRecord
 from trood_auth_client.authentication import TroodUser
 
+from journal.api.tests.factories import JournalFactory, HistoryRecordFactory
+
 trood_user = TroodUser({
     "id": 1,
 })
@@ -100,3 +102,39 @@ class HistoryApiCaseBehaveTest(APITestCase):
         }]
 
         assert response.json() == awaited_data
+
+
+    def test_save_history_only_if_diff(self):
+        journal = JournalFactory.create(id='diff_test', target_key='id', name='Clients journal')
+
+        HistoryRecordFactory.create(
+            journal=journal, action='create', actor={'name': 'John Doe', 'id': 1},
+            content={'name': 'Client Inc.', 'status': 'new', "id": 1}
+        )
+
+        # Push update without any changes
+        #
+        input_data = {
+            "journal": journal.id,
+            "action": "update",
+            "actor": {"name": "John Doe", "id": 2},
+            "content": {
+                "id": 1,
+                "name": "Client Inc.",
+                "status": "new",
+            }
+
+        }
+
+        response = self.client.post(f'/api/v1.0/history/', data=input_data, format='json')
+
+        count = HistoryRecord.objects.filter(journal=journal).count()
+        assert count == 1
+
+        # Push real changes
+        #
+        input_data["content"]["status"] = "updated"
+        response = self.client.post(f'/api/v1.0/history/', data=input_data, format='json')
+
+        count = HistoryRecord.objects.filter(journal=journal).count()
+        assert count == 2

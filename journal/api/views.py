@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from journal.api.filters import HistoryRecordFilter, RQLFilterBackend
 from journal.api.models import Journal, HistoryRecord
+from journal.api.pagination import RQLPagination
 from journal.api.serializers import JournalSerializer, HistoryRecordSerializer
 
 
@@ -21,6 +22,7 @@ class HistoryRecordViewSet(viewsets.ModelViewSet):
     serializer_class = HistoryRecordSerializer
     filter_backends = (filters.DjangoFilterBackend, RQLFilterBackend)
     filter_class = HistoryRecordFilter
+    pagination_class = RQLPagination
     permission_classes = (IsAuthenticated,)
 
 
