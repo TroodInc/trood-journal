@@ -38,3 +38,9 @@ class FiltersTestCase(testcases.TestCase):
         expected = [['AND', ['exact', 'a', 'test_field'], ['exact', 'test_field', '2']]]
 
         assert parsed == expected
+
+    def test_parse_if_limit(self):
+        parsed = RQLFilterBackend.parse_rql('and(eq(a,test_field),eq(test_field,2)),limit(1,5)')
+        expected = [['AND', ['exact', 'a', 'test_field'], ['exact', 'test_field', '2']]]
+
+        assert parsed == expected

@@ -274,8 +274,6 @@ class HistoryRecordViewSetTestCase(APITestCase):
         response = self.client.post(f'/api/v1.0/history/', data=input_data, format='json')
         assert response.status_code == 201
 
-        response = self.client.get(f'/api/v1.0/history/?journal={journal.id}', format='json')
-
         last_history_record = HistoryRecord.objects.first()
         diff = last_history_record.diff
         awaited_diff = {
@@ -283,3 +281,19 @@ class HistoryRecordViewSetTestCase(APITestCase):
             'status': {'update': 'update'},
         }
         assert diff == awaited_diff
+
+    def test_pagination(self):
+        journal = JournalFactory.create(id='test', target_key='id', name='Clients journal')
+
+        for i in range(5):
+            HistoryRecordFactory.create(
+                journal=journal, action='create', actor={'name': 'John Doe', 'id': 1},
+                content={'name': 'Client Inc.', 'status': 'new'}
+            )
+
+        response = self.client.get(f'/api/v1.0/history/?rql=eq(journal,{journal.id}),limit(1,2)', format='json')
+
+        assert response.status_code == 200
+        assert response.data['total_count'] == 5
+        assert len(response.data['data']) == 2
+
