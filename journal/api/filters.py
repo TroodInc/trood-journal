@@ -122,7 +122,7 @@ class RQLFilterBackend(BaseFilterBackend):
         try:
             parse_results = cls.QUERY.parseString(rql)
         except ParseException:
-            raise
+            return []
         return parse_results.asList()
 
     @classmethod
