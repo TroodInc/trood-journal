@@ -68,20 +68,12 @@ class HistoryRecordSerializer(serializers.ModelSerializer):
             new_history_record.prev = prev_history_record
 
         if journal.save_diff and prev_history_record:
-        # Process current record in case if previous exists
-            new_history_content = {}
-            new_history_content.update(prev_history_record.content)
-            new_history_content.update(content)
+            diff = make_diff(prev_history_record.content, content)
 
-            diff = make_diff(prev_history_record.content, new_history_content)
+            new_history_record.version = prev_history_record.version + 1
+            new_history_record.diff = diff
 
-            if diff:
-                new_history_record.content = new_history_content
-                new_history_record.version = prev_history_record.version + 1
-                new_history_record.diff = diff
-                new_history_record.save()
-        else:
-            new_history_record.save()
+        new_history_record.save()
 
         return new_history_record
 

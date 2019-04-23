@@ -50,7 +50,7 @@ class HistoryApiCaseBehaveTest(APITestCase):
             "actor": {"name": "John Doe", "id": 2},
             "content": {
                 "id": 1,
-                # "name": "Client Inc.",
+                "name": "Client Inc.",
                 "status": "update",
                 "files": [1]
             }
@@ -103,38 +103,31 @@ class HistoryApiCaseBehaveTest(APITestCase):
 
         assert response.json() == awaited_data
 
-
-    def test_save_history_only_if_diff(self):
-        journal = JournalFactory.create(id='diff_test', target_key='id', name='Clients journal')
+    def test_save_remove_history_event(self):
+        journal = JournalFactory.create(id='remove_test', target_key='id', name='Clients journal')
 
         HistoryRecordFactory.create(
             journal=journal, action='create', actor={'name': 'John Doe', 'id': 1},
             content={'name': 'Client Inc.', 'status': 'new', "id": 1}
         )
 
-        # Push update without any changes
+        # Push remove event with empty content
         #
         input_data = {
             "journal": journal.id,
-            "action": "update",
+            "action": "remove",
             "actor": {"name": "John Doe", "id": 2},
-            "content": {
-                "id": 1,
-                "name": "Client Inc.",
-                "status": "new",
-            }
-
+            "content": {'id': 1},
         }
 
         response = self.client.post(f'/api/v1.0/history/', data=input_data, format='json')
+        assert response.status_code == 201
 
-        count = HistoryRecord.objects.filter(journal=journal).count()
-        assert count == 1
+        record_id = response.json()['id']
 
-        # Push real changes
-        #
-        input_data["content"]["status"] = "updated"
-        response = self.client.post(f'/api/v1.0/history/', data=input_data, format='json')
+        print(response.json())
 
-        count = HistoryRecord.objects.filter(journal=journal).count()
-        assert count == 2
+        record = HistoryRecord.objects.get(id=record_id)
+
+        assert record.prev is not None
+
