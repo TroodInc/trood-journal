@@ -14,6 +14,10 @@ class HistoryRecordViewSetTestCase(testcases.TestCase):
                                          actor={'name': 'John Doe', 'id': 2},
                                          content={'name': 'Client Inc.',
                                                   'status': 'new',
+                                                  'related': {
+                                                      '_object': 'corporation',
+                                                      'id': 'Test Co.'
+                                                  },
                                                   'files': [2, 14]})
 
         hr2 = HistoryRecordFactory.create(journal=journal,
@@ -21,6 +25,10 @@ class HistoryRecordViewSetTestCase(testcases.TestCase):
                                          actor={'name': 'John Doe', 'id': 2},
                                          content={'name': 'Client Inc.',
                                                   'status': 'update',
+                                                  'related': {
+                                                      '_object': 'corporation',
+                                                      'id': 'Gor Inc.'
+                                                  },
                                                   'files': [2, 3],
                                                   'comments': ['Hello worlds']})
         hr1_data = HistoryRecordDiffSerializer(instance=hr1).data
@@ -29,6 +37,12 @@ class HistoryRecordViewSetTestCase(testcases.TestCase):
         awaited_diff = {
             'comments': {'insert': ['Hello worlds']},
             'status': {'update': 'update'},
+            'related': {
+                'update': {
+                    '_object': 'corporation',
+                    'id': 'Gor Inc.'
+                }
+            },
             'files': {
                 'delete': [14],
                 'insert': [3]

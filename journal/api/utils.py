@@ -1,49 +1,38 @@
 from jsondiff import diff as _diff
 
 
-def _make_diff(dict1, dict2):
-    diff = _diff(dict1, dict2, syntax='explicit')
-    return diff
-
-
-def _invert_diff(dict1, dict2, diff):
-    keys = list(diff.keys())
+def _invert_diff(prev, new, diff):
     inverted = {}
-    for k in keys:
-        original_entry = diff[k]
-        for f in original_entry.keys():
-            field, action, value = f, k.label, original_entry[f]
-            if type(value) == dict:
-                resolved_action_for_field = _resolve_inner_actions(dict1, f, value)
-                inverted[field] = resolved_action_for_field
-            else:
-                inverted[field] = {action: value}
+    for action, value in diff.items():
+        if action.label == 'delete':
+            for deleted in value:
+                inverted[deleted] = {action.label: prev[deleted]}
+
+        elif action.label in ('insert', 'update'):
+            for field, changes in value.items():
+                if field in prev and type(prev[field]) == list:
+                    changes = {k.label: v for k, v in changes.items()}
+
+                    if 'insert' in changes:
+                        changes['insert'] = [v[1] for v in changes['insert']]
+
+                    if 'delete' in changes:
+                        changes['delete'] = [prev[field][v] for v in changes['delete']]
+
+                    inverted[field] = changes
+
+                elif type(changes) == dict:
+                    inverted[field] = {action.label: new[field]}
+                else:
+                    inverted[field] = {action.label: value[field]}
+
     return inverted
-
-
-def _resolve_inner_actions(dict_from, comparable_field, value):
-    resolved_action_for_field = {}
-    for k,v in value.items():
-        action = k.label
-        value = v
-        if type(value) == list:
-            value_list = []
-            if action == 'delete':
-                # {delete: [2]} only indexes
-                for i in value:
-                    value_list.append(dict_from[comparable_field][i])
-            elif action == 'insert':
-                # {insert: [(1, 'b'), (2, 'c')]} - index with value
-                for i in value:
-                    value_list.append(i[1])
-            resolved_action_for_field[action] = value_list
-    return resolved_action_for_field
 
 
 def make_diff(dict1, dict2):
     """
     Make difference's dict in format field:{action:value}
     """
-    diff = _make_diff(dict1, dict2)
-    invert_diff = _invert_diff(dict1, dict2, diff)
-    return invert_diff
+    diff = _diff(dict1, dict2, syntax='explicit')
+    print(diff)
+    return _invert_diff(dict1, dict2, diff)
