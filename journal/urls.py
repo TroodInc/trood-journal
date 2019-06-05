@@ -7,7 +7,7 @@ from rest_framework.documentation import include_docs_urls
 from journal.api.views import JournalViewSet, HistoryRecordViewSet
 
 router = routers.DefaultRouter()
-router.register(r'journals', JournalViewSet, base_name='journals')
+router.register(r'journal', JournalViewSet, base_name='journal')
 router.register(r'history', HistoryRecordViewSet, base_name='history')
 
 urlpatterns = [

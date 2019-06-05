@@ -26,7 +26,7 @@ class HistoryRecordSerializer(serializers.ModelSerializer):
                         'diff': {'read_only': True}}
 
     def get_created_at_timestamp(self, obj):
-        return obj.created_at.timestamp()
+        return obj.created_at.timestamp() if obj.created_at else None
 
     def get_revision(self, obj):
         prev = obj.prev
@@ -57,35 +57,26 @@ class HistoryRecordSerializer(serializers.ModelSerializer):
             target_id=target_id
         )
 
-        new_history_record = HistoryRecord.objects.create(
+        new_history_record = HistoryRecord(
             journal=journal,
             action=action,
             actor=actor,
             content=content,
         )
 
-        # Process current record in case if previous exists
         if prev_history_record:
-            # Make diff
-            prev_history_record_dict = HistoryRecordDiffSerializer(
-                instance=prev_history_record
-            ).data
-            new_history_record_dict = HistoryRecordDiffSerializer(
-                instance=new_history_record
-            ).data
-            diff = make_diff(prev_history_record_dict, new_history_record_dict)
-            new_history_record.diff = diff
-            new_history_record.save()
-
-            # Save previous version to use as revision
             new_history_record.prev = prev_history_record
-            new_history_record.save()
 
-            # Update version
+        if journal.save_diff and prev_history_record:
+            diff = make_diff(prev_history_record.content, content)
+
             new_history_record.version = prev_history_record.version + 1
-            new_history_record.save()
+            new_history_record.diff = diff
+
+        new_history_record.save()
 
         return new_history_record
+
 
 
 class HistoryRecordDiffSerializer(HistoryRecordSerializer):

@@ -1,4 +1,4 @@
-FROM python:3
+FROM python:3.6
 
 ENV APPDIR=/home/src
 ENV PYTHONPATH=$PYTHONPATH:$APPDIR
@@ -11,8 +11,9 @@ COPY ./journal $APPDIR/journal
 COPY ./manage.py $APPDIR/
 COPY ./requirements.txt $APPDIR/
 COPY ./pytest.ini $APPDIR/
+COPY ./entry-point.sh $APPDIR/
 
 RUN pip install -r $APPDIR/requirements.txt
 
 EXPOSE 8000
-CMD /usr/local/bin/gunicorn -b 0.0.0.0:8000 --reload --access-logfile - journal.wsgi:application
+CMD sh entry-point.sh

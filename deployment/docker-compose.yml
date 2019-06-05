@@ -1,4 +1,4 @@
-version: "2"
+version: "2.2"
 
 services:
   journal:
@@ -7,26 +7,17 @@ services:
       dockerfile: deployment/Dockerfile
     container_name: journal
     environment:
-      DJANGO_CONFIGURATION: Production
-    networks:
-      - test-network
+      RAVEN_CONFIG_DSN: "YOUR_DSN_HERE"
+      RAVEN_CONFIG_RELEASE: "dev"
+      ENABLE_RAVEN: "False"
+    ports:
+      - "8000:8000"
 
   journal_postgres:
-      image: postgres:9.5
-      container_name: postgres.journal
-      volumes:
-        - ./postgres/${CONTAINER_NAME}/data:/var/lib/postgresql/data
-        - ./postgres/${CONTAINER_NAME}/conf:/etc/postgresql
-        - ./postgres/${CONTAINER_NAME}/logs:/var/log/postgresql
-      environment:
-        LC_ALL: C.UTF-8
-        POSTGRES_DB: journal
-        POSTGRES_USER: journal
-        POSTGRES_PASSWORD: journal
-
-      networks:
-        - test-network
-
-networks:
-  test-network:
-    driver: bridge
+    image: postgres:9.5
+    container_name: postgres.journal
+    environment:
+      LC_ALL: C.UTF-8
+      POSTGRES_DB: journal
+      POSTGRES_USER: journal
+      POSTGRES_PASSWORD: journal

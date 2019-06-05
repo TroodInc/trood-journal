@@ -4,3 +4,10 @@ journal/local_settings.py
 __pycache__
 .idea/*
 .pytest_cache/*
+.env
+.vscode
+tmp
+.DS_Store
+
+docs/_build
+docs/autoapi
