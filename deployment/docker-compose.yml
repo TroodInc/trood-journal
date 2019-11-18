@@ -11,7 +11,7 @@ services:
       RAVEN_CONFIG_RELEASE: "dev"
       ENABLE_RAVEN: "False"
     ports:
-      - "8000:8000"
+      - "8000"
 
   journal_postgres:
     image: postgres:9.5
